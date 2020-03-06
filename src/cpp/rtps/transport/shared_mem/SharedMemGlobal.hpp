@@ -21,7 +21,8 @@
 
 #include <rtps/transport/shared_mem/SharedMemSegment.hpp>
 #include <rtps/transport/shared_mem/MultiProducerConsumerRingBuffer.hpp>
-#include <rtps/transport/shared_mem/SharedMemLog.hpp>
+
+#define THREADID "(ID:" << std::this_thread::get_id() <<") "
 
 namespace eprosima {
 namespace fastdds {
@@ -86,7 +87,7 @@ public:
     {
         friend class MockPortSharedMemGlobal;
 
-private:
+    private:
 
         std::unique_ptr<SharedMemSegment> port_segment_;
 
@@ -144,7 +145,7 @@ private:
             node_->empty_cv.notify_all();
         }
 
-public:
+    public:
 
         /**
          * Defines open sharing mode of a shared-memory port:
