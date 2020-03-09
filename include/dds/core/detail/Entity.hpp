@@ -13,14 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- */
+*/
 
 #ifndef EPROSIMA_DDS_CORE_DETAIL_ENTITY_IMPL_HPP_
 #define EPROSIMA_DDS_CORE_DETAIL_ENTITY_IMPL_HPP_
 
-//TODO: Fix when EntityDelegate is implemented
-//#include <dds/core/detail/TEntityImpl.hpp>
-//#include <org/opensplice/core/EntityDelegate.hpp>
+#include <fastdds/dds/core/Entity.hpp>
 
 /**
  * @cond
@@ -31,11 +29,7 @@ namespace dds {
 namespace core {
 namespace detail {
 
-//TODO: Fix when EntityDelegate is implemented
-//typedef dds::core::TEntity<org::opensplice::core::EntityDelegate> Entity;
-class Entity
-{
-};
+using Entity = eprosima::fastdds::dds::Entity;
 
 } //namespace detail
 } //namespace core

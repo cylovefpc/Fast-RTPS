@@ -42,20 +42,23 @@ class DomainParticipant;
 class TypeSupport : public std::shared_ptr<fastdds::dds::TopicDataType>
 {
 public:
+
     using Base = std::shared_ptr<fastdds::dds::TopicDataType>;
-    using Base::operator->;
-    using Base::operator*;
+    using Base::operator ->;
+    using Base::operator *;
     using Base::operator bool;
-    using Base::operator=;
+    using Base::operator =;
 
     RTPS_DllAPI TypeSupport()
         : std::shared_ptr<fastdds::dds::TopicDataType>(nullptr)
-    {}
+    {
+    }
 
     RTPS_DllAPI TypeSupport(
             const TypeSupport& type)
         : std::shared_ptr<fastdds::dds::TopicDataType>(type)
-    {}
+    {
+    }
 
     /*!
      * \brief TypeSupport constructor that receives a TopicDataType pointer.
@@ -66,7 +69,8 @@ public:
     RTPS_DllAPI explicit TypeSupport(
             fastdds::dds::TopicDataType* ptr)
         : std::shared_ptr<fastdds::dds::TopicDataType>(ptr)
-    {}
+    {
+    }
 
     /*!
      * \brief TypeSupport constructor that receives a DynamicPubSubType.
@@ -75,10 +79,12 @@ public:
      */
     RTPS_DllAPI TypeSupport(
             fastrtps::types::DynamicPubSubType ptr)
-        : std::shared_ptr<fastdds::dds::TopicDataType>(std::make_shared<fastrtps::types::DynamicPubSubType>(std::move(ptr)))
-    {}
+        : std::shared_ptr<fastdds::dds::TopicDataType>(std::make_shared<fastrtps::types::DynamicPubSubType>(std::move(
+                    ptr)))
+    {
+    }
 
-    RTPS_DllAPI virtual bool register_type(
+    RTPS_DllAPI virtual fastrtps::types::ReturnCode_t register_type(
             DomainParticipant* participant,
             std::string type_name) const;
 
@@ -113,7 +119,7 @@ public:
     }
 
     RTPS_DllAPI virtual void delete_data(
-            void * data)
+            void* data)
     {
         return get()->deleteData(data);
     }
@@ -126,7 +132,7 @@ public:
         return get()->getKey(data, i_handle, force_md5);
     }
 
-    RTPS_DllAPI virtual bool operator==(
+    RTPS_DllAPI virtual bool operator ==(
             const TypeSupport& type_support)
     {
         return get()->m_typeSize == type_support->m_typeSize
@@ -138,6 +144,7 @@ public:
     {
         return get() == nullptr;
     }
+
 };
 
 } /* namespace dds */

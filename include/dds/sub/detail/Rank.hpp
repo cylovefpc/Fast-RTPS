@@ -13,13 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- */
+*/
 
 #ifndef EPROSIMA_DDS_SUB_DETAIL_RANK_HPP_
 #define EPROSIMA_DDS_SUB_DETAIL_RANK_HPP_
 
 //#include <dds/sub/detail/TRankImpl.hpp>
 //#include <org/opensplice/sub/RankImpl.hpp>
+
+#include <cstdint>
 
 /**
  * @cond
@@ -30,9 +32,16 @@ namespace dds {
 namespace sub {
 namespace detail {
 
-//typedef dds::sub::TRank< org::opensplice::sub::RankImpl > Rank;
-class Rank
+struct Rank
 {
+    //!Preview of the samples that follow within the sequence returned by the read or take operations.
+    int32_t sample_rank = 0;
+
+    //!Preview of the samples that follow within the sequence returned by the read or take operations.
+    int32_t generation_rank = 0;
+
+    //!Preview of what is available within DataReader.
+    int32_t absolute_generation_rank = 0;
 };
 
 } //namespace detail

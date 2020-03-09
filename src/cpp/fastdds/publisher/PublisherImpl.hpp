@@ -85,6 +85,8 @@ public:
 
     const PublisherListener* get_listener() const;
 
+    PublisherListener* get_listener();
+
     ReturnCode_t set_listener(
             PublisherListener* listener);
 
@@ -188,9 +190,12 @@ public:
         PublisherWriterListener(
                 PublisherImpl* p)
             : publisher_(p)
-        {}
+        {
+        }
 
-        virtual ~PublisherWriterListener() override {}
+        virtual ~PublisherWriterListener() override
+        {
+        }
 
         void on_publication_matched(
                 DataWriter* writer,
@@ -198,7 +203,7 @@ public:
 
         void on_offered_deadline_missed(
                 DataWriter* writer,
-                const fastrtps::OfferedDeadlineMissedStatus& status) override;
+                const OfferedDeadlineMissedStatus& status) override;
 
         void on_liveliness_lost(
                 DataWriter* writer,

@@ -26,6 +26,8 @@
 #include <fastdds/dds/domain/qos/DomainParticipantFactoryQos.hpp>
 #include <fastdds/dds/domain/qos/DomainParticipantQos.hpp>
 
+#include <dds/core/status/Status.hpp>
+
 #include <mutex>
 #include <map>
 
@@ -78,6 +80,20 @@ public:
             DomainParticipantListener* listen = nullptr);
 
     /**
+     * @brief create_participant
+     * @param did
+     * @param qos
+     * @param listen
+     * @param mask
+     * @return
+     */
+    RTPS_DllAPI DomainParticipant* create_participant(
+            DomainId_t did,
+            const DomainParticipantQos& qos,
+            DomainParticipantListener* listen = nullptr,
+            const ::dds::core::status::StatusMask& mask = ::dds::core::status::StatusMask::none());
+
+    /**
      * This operation retrieves a previously created DomainParticipant belonging to specified domain_id.
      * If no such DomainParticipant exists, the operation will return 'nullptr'.
      * If multiple DomainParticipant entities belonging to that domain_id exist,
@@ -100,6 +116,11 @@ public:
     //!Fills participant_attributes with the default values.
     RTPS_DllAPI ReturnCode_t get_default_participant_qos(
             fastrtps::ParticipantAttributes& participant_qos) const;
+
+    /* TODO
+    RTPS_DllAPI ReturnCode_t set_default_participant_qos(
+            const fastrtps::ParticipantAttributes& participant_qos);
+    */
 
     /**
      * Remove a Participant and all associated publishers and subscribers.
@@ -128,14 +149,6 @@ public:
 
     RTPS_DllAPI ReturnCode_t set_default_participant_qos(
             const DomainParticipantQos& participant_qos);
-
-    /* TODO implement
-    RTPS_DllAPI DomainParticipant* create_participant(
-            uint8_t domain_id,
-            const DomainParticipantQos& qos,
-            DomainParticipantListener* listen = nullptr,
-            const StatusMask& mask);
-    */
 
 private:
 

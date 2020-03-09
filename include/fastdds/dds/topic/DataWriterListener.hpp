@@ -20,9 +20,10 @@
 #define _FASTRTPS_DATAWRITERLISTENER_HPP_
 
 #include <fastdds/rtps/common/Types.h>
-#include <fastrtps/qos/DeadlineMissedStatus.h>
+#include <fastdds/dds/core/status/DeadlineMissedStatus.hpp>
 #include <fastdds/dds/core/status/BaseStatus.hpp>
 #include <fastdds/dds/core/status/PublicationMatchedStatus.hpp>
+#include <fastdds/dds/core/status/IncompatibleQosStatus.hpp>
 
 namespace eprosima {
 namespace fastdds {
@@ -37,8 +38,14 @@ class DataWriter;
 class RTPS_DllAPI DataWriterListener
 {
 public:
-    DataWriterListener(){}
-    virtual ~DataWriterListener(){}
+
+    DataWriterListener()
+    {
+    }
+
+    virtual ~DataWriterListener()
+    {
+    }
 
     /**
      * This method is called when the Publisher is matched (or unmatched) against an endpoint.
@@ -47,7 +54,7 @@ public:
      */
     virtual void on_publication_matched(
             DataWriter* writer,
-            const fastdds::dds::PublicationMatchedStatus& info)
+            const PublicationMatchedStatus& info)
     {
         (void)writer;
         (void)info;
@@ -60,7 +67,20 @@ public:
      */
     virtual void on_offered_deadline_missed(
             DataWriter* writer,
-            const fastrtps::OfferedDeadlineMissedStatus& status)
+            const OfferedDeadlineMissedStatus& status)
+    {
+        (void)writer;
+        (void)status;
+    }
+
+    /**
+     * @brief Method called when an incompatible Qos is offered.
+     * @param writer Pointer to the associated Publisher
+     * @param status The incompatible qos status
+     */
+    virtual void on_offered_incompatible_qos(
+            DataWriter* writer,
+            const OfferedIncompatibleQosStatus& status)
     {
         (void)writer;
         (void)status;
@@ -78,6 +98,7 @@ public:
         (void)writer;
         (void)status;
     }
+
 };
 
 } /* namespace dds */

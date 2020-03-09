@@ -13,24 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- */
+*/
 
 #ifndef EPROSIMA_DDS_DOMAIN_DETAIL_DOMAINPARTICIPANT_HPP_
 #define EPROSIMA_DDS_DOMAIN_DETAIL_DOMAINPARTICIPANT_HPP_
 
-//#include <dds/domain/detail/TDomainParticipantImpl.hpp>
-//TODO: Fix when DomainParticipantDelegate is implemented
-//#include <fastdds/dds/domain/DomainParticipantDelegate.hpp>
+#include <fastdds/dds/domain/DomainParticipant.hpp>
 
 namespace dds {
 namespace domain {
 namespace detail {
 
-//TODO: Fix when DomainParticipantDelegate is implemented
-//typedef dds::domain::TDomainParticipant<eprosima::fastdds::domain::DomainParticipant> DomainParticipant;
-class DomainParticipant
-{
-};
+using DomainParticipant = eprosima::fastdds::dds::DomainParticipant;
 
 } //namespace detail
 } //namespace domain
