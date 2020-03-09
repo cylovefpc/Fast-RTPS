@@ -27,7 +27,6 @@
 
 #include <dds/core/Reference.hpp>
 
-
 namespace dds {
 namespace core {
 
@@ -63,7 +62,8 @@ public:
         TEntity)
 
     /** @cond */
-    virtual ~TEntity();
+    virtual ~TEntity()
+    {}
     /** @endcond */
 
     /**
@@ -148,7 +148,10 @@ public:
      * @throw  dds::core::PreconditionNotMetError
      *              Entities' factory is not enabled.
      */
-    void enable();
+    void enable()
+    {
+        this->delegate()->enable();
+    }
 
     /**
      * This operation returns a mask with the communication statuses in the Entity that
@@ -197,7 +200,10 @@ public:
      * @return dds::core::status::StatusMask
      *              a bit mask in which each bit shows which value has changed.
      */
-    const dds::core::status::StatusMask status_changes();
+    const dds::core::status::StatusMask status_changes()
+    {
+        return this->delegate()->get_status_changes();
+    }
 
     /**
      * This operation returns the InstanceHandle_t that represents the Entity.
@@ -216,7 +222,10 @@ public:
      *              Result value is the instance_handle of the built-in topic
      *              sample that represents the state of this Entity.
      */
-    const InstanceHandle instance_handle() const;
+    const InstanceHandle instance_handle() const
+    {
+        return this->delegate()->get_instance_handle();
+    }
 
 
     /**
@@ -237,7 +246,10 @@ public:
      *
      * @return void
      */
-    void close();
+    void close()
+    {
+        this->delegate()->close();
+    }
 
     /**
      * Retain the Entity, even when it goes out of scope.
@@ -249,7 +261,10 @@ public:
      *
      * @return void
      */
-    void retain();
+    void retain()
+    {
+        // this->delegate()->retain();
+    }
 };
 
 typedef dds::core::detail::Entity Entity;

@@ -98,10 +98,18 @@ public:
 
     RTPS_DllAPI EntityFactoryQosPolicy()
         : autoenable_created_entities(true)
-    {}
+    {
+    }
+
+    RTPS_DllAPI EntityFactoryQosPolicy(
+            bool autoenable)
+        : autoenable_created_entities(autoenable)
+    {
+    }
 
     virtual RTPS_DllAPI ~EntityFactoryQosPolicy()
-    {}
+    {
+    }
 
     bool operator ==(
             const EntityFactoryQosPolicy& qos) const
@@ -139,6 +147,14 @@ public:
         : Parameter_t(PID_DURABILITY, PARAMETER_KIND_LENGTH)
         , QosPolicy(true)
         , kind(VOLATILE_DURABILITY_QOS)
+    {
+    }
+
+    RTPS_DllAPI DurabilityQosPolicy(
+            DurabilityQosPolicyKind durability)
+        : Parameter_t(PID_DURABILITY, PARAMETER_KIND_LENGTH)
+        , QosPolicy(true)
+        , kind(durability)
     {
     }
 
@@ -233,6 +249,14 @@ public:
     {
     }
 
+    RTPS_DllAPI DeadlineQosPolicy(
+            const fastrtps::Duration_t& deadline)
+        : Parameter_t(PID_DEADLINE, PARAMETER_TIME_LENGTH)
+        , QosPolicy(true)
+        , period(deadline)
+    {
+    }
+
     virtual RTPS_DllAPI ~DeadlineQosPolicy()
     {
     }
@@ -289,6 +313,14 @@ public:
         : Parameter_t(PID_LATENCY_BUDGET, PARAMETER_TIME_LENGTH)
         , QosPolicy(true)
         , duration(0, 0)
+    {
+    }
+
+    RTPS_DllAPI LatencyBudgetQosPolicy(
+            const fastrtps::Duration_t& latency_budget)
+        : Parameter_t(PID_LATENCY_BUDGET, PARAMETER_TIME_LENGTH)
+        , QosPolicy(true)
+        , duration(latency_budget)
     {
     }
 
@@ -368,6 +400,29 @@ public:
     {
     }
 
+    RTPS_DllAPI LivelinessQosPolicy(
+            LivelinessQosPolicyKind liveliness,
+            const fastrtps::Duration_t& lease)
+        : Parameter_t(PID_LIVELINESS, PARAMETER_KIND_LENGTH + PARAMETER_TIME_LENGTH)
+        , QosPolicy(true)
+        , kind(liveliness)
+        , lease_duration(lease)
+        , announcement_period(TIME_T_INFINITE_SECONDS, TIME_T_INFINITE_NANOSECONDS)
+    {
+    }
+
+    RTPS_DllAPI LivelinessQosPolicy(
+            LivelinessQosPolicyKind liveliness,
+            const fastrtps::Duration_t& lease,
+            const fastrtps::Duration_t& announcement)
+        : Parameter_t(PID_LIVELINESS, PARAMETER_KIND_LENGTH + PARAMETER_TIME_LENGTH)
+        , QosPolicy(true)
+        , kind(liveliness)
+        , lease_duration(lease)
+        , announcement_period(announcement)
+    {
+    }
+
     virtual RTPS_DllAPI ~LivelinessQosPolicy()
     {
     }
@@ -436,6 +491,16 @@ public:
         , QosPolicy(true) //indicate send always
         , kind(BEST_EFFORT_RELIABILITY_QOS)
         , max_blocking_time{0, 100000000} // max_blocking_time = 100ms
+    {
+    }
+
+    RTPS_DllAPI ReliabilityQosPolicy(
+            ReliabilityQosPolicyKind reliability,
+            const fastrtps::Duration_t& max_block_time)
+        : Parameter_t(PID_RELIABILITY, PARAMETER_KIND_LENGTH + PARAMETER_TIME_LENGTH)
+        , QosPolicy(true) //indicate send always
+        , kind(reliability)
+        , max_blocking_time(max_block_time)
     {
     }
 
@@ -524,6 +589,14 @@ public:
     {
     }
 
+    RTPS_DllAPI OwnershipQosPolicy(
+            OwnershipQosPolicyKind ownership)
+        : Parameter_t(PID_OWNERSHIP, PARAMETER_KIND_LENGTH)
+        , QosPolicy(true)
+        , kind(ownership)
+    {
+    }
+
     virtual RTPS_DllAPI ~OwnershipQosPolicy()
     {
     }
@@ -591,6 +664,14 @@ public:
         : Parameter_t(PID_DESTINATION_ORDER, PARAMETER_KIND_LENGTH)
         , QosPolicy(true)
         , kind(BY_RECEPTION_TIMESTAMP_DESTINATIONORDER_QOS)
+    {
+    }
+
+    RTPS_DllAPI DestinationOrderQosPolicy(
+            DestinationOrderQosPolicyKind destination_order)
+        : Parameter_t(PID_DESTINATION_ORDER, PARAMETER_KIND_LENGTH)
+        , QosPolicy(true)
+        , kind(destination_order)
     {
     }
 
@@ -851,6 +932,14 @@ public:
     {
     }
 
+    RTPS_DllAPI TimeBasedFilterQosPolicy(
+            const fastrtps::Duration_t& min_separation)
+        : Parameter_t(PID_TIME_BASED_FILTER, PARAMETER_TIME_LENGTH)
+        , QosPolicy(false)
+        , minimum_separation(min_separation)
+    {
+    }
+
     virtual RTPS_DllAPI ~TimeBasedFilterQosPolicy()
     {
     }
@@ -923,6 +1012,18 @@ public:
         , access_scope(INSTANCE_PRESENTATION_QOS)
         , coherent_access(false)
         , ordered_access(false)
+    {
+    }
+
+    RTPS_DllAPI PresentationQosPolicy(
+            PresentationQosPolicyAccessScopeKind kind,
+            bool coherent_acc,
+            bool ordered_acc)
+        : Parameter_t(PID_PRESENTATION, PARAMETER_PRESENTATION_LENGTH)
+        , QosPolicy(false)
+        , access_scope(kind)
+        , coherent_access(coherent_acc)
+        , ordered_access(ordered_acc)
     {
     }
 
@@ -1135,6 +1236,22 @@ public:
         partitions_.copy(&b.partitions_, b.max_size_ != 0);
     }
 
+    RTPS_DllAPI PartitionQosPolicy(
+            const std::string& partition)
+        : Parameter_t(PID_PARTITION, 0)
+        , QosPolicy(false)
+        , names_{partition}
+    {
+    }
+
+    RTPS_DllAPI PartitionQosPolicy(
+            const std::vector<std::string>& partitions)
+        : Parameter_t(PID_PARTITION, 0)
+        , QosPolicy(false)
+        , names_(partitions)
+    {
+    }
+
     virtual RTPS_DllAPI ~PartitionQosPolicy()
     {
     }
@@ -1152,8 +1269,8 @@ public:
     PartitionQosPolicy& operator =(
             const PartitionQosPolicy& b)
     {
-        QosPolicy::operator=(b);
-        Parameter_t::operator=(b);
+        QosPolicy::operator =(b);
+        Parameter_t::operator =(b);
         max_size_ = b.max_size_;
         partitions_.reserve(max_size_ != 0 ?
                 b.partitions_.max_size :
@@ -1281,7 +1398,7 @@ public:
      * @param nam Vector of partition name strings.
      */
     RTPS_DllAPI inline void names(
-            std::vector<std::string>& nam)
+            const std::vector<std::string>& nam)
     {
         clear();
         for (auto it = nam.begin(); it != nam.end(); ++it)
@@ -1293,6 +1410,7 @@ public:
 
 private:
 
+    std::vector<std::string> names_;
     uint32_t max_size_;
     fastrtps::rtps::SerializedPayload_t partitions_;
     uint32_t Npartitions_;
@@ -1311,6 +1429,14 @@ public:
     RTPS_DllAPI TopicDataQosPolicy()
         : Parameter_t(PID_TOPIC_DATA, 0)
         , QosPolicy(false)
+    {
+    }
+
+    RTPS_DllAPI TopicDataQosPolicy(
+            const std::vector<fastrtps::rtps::octet>& data)
+        : Parameter_t(PID_TOPIC_DATA, 0)
+        , QosPolicy(false)
+        , value(data)
     {
     }
 
@@ -1404,6 +1530,14 @@ public:
         : Parameter_t(PID_GROUP_DATA, 0)
         , QosPolicy(false)
         , value{}
+    {
+    }
+
+    RTPS_DllAPI GroupDataQosPolicy(
+            const std::vector<fastrtps::rtps::octet>& data)
+        : Parameter_t(PID_GROUP_DATA, 0)
+        , QosPolicy(false)
+        , value(data)
     {
     }
 
@@ -1512,6 +1646,16 @@ public:
     {
     }
 
+    RTPS_DllAPI HistoryQosPolicy(
+            HistoryQosPolicyKind history,
+            int32_t history_depth)
+        : Parameter_t(PID_HISTORY, PARAMETER_KIND_LENGTH + 4)
+        , QosPolicy(true)
+        , kind(history)
+        , depth(history_depth)
+    {
+    }
+
     virtual RTPS_DllAPI ~HistoryQosPolicy()
     {
     }
@@ -1580,6 +1724,33 @@ public:
         , max_instances(10)
         , max_samples_per_instance(400)
         , allocated_samples(100)
+    {
+    }
+
+    RTPS_DllAPI ResourceLimitsQosPolicy(
+            int32_t samples,
+            int32_t instances,
+            int32_t samples_per_instance)
+        : Parameter_t(PID_RESOURCE_LIMITS, 4 + 4 + 4)
+        , QosPolicy(false)
+        , max_samples(samples)
+        , max_instances(instances)
+        , max_samples_per_instance(samples_per_instance)
+        , allocated_samples(max_instances > 100 ? max_instances : 100)
+    {
+    }
+
+    RTPS_DllAPI ResourceLimitsQosPolicy(
+            int32_t samples,
+            int32_t instances,
+            int32_t samples_per_instance,
+            int32_t allocated)
+        : Parameter_t(PID_RESOURCE_LIMITS, 4 + 4 + 4)
+        , QosPolicy(false)
+        , max_samples(samples)
+        , max_instances(instances)
+        , max_samples_per_instance(samples_per_instance)
+        , allocated_samples(allocated)
     {
     }
 
@@ -1653,6 +1824,24 @@ public:
     {
     }
 
+    RTPS_DllAPI DurabilityServiceQosPolicy(
+            const fastrtps::Duration_t& cleanup_delay,
+            HistoryQosPolicyKind kind,
+            int32_t depth,
+            int32_t samples,
+            int32_t instances,
+            int32_t samples_per_instance)
+        : Parameter_t(PID_DURABILITY_SERVICE, PARAMETER_TIME_LENGTH + PARAMETER_KIND_LENGTH + 4 + 4 + 4 + 4)
+        , QosPolicy(false)
+        , service_cleanup_delay(cleanup_delay)
+        , history_kind(kind)
+        , history_depth(depth)
+        , max_samples(samples)
+        , max_instances(instances)
+        , max_samples_per_instance(samples_per_instance)
+    {
+    }
+
     virtual RTPS_DllAPI ~DurabilityServiceQosPolicy()
     {
     }
@@ -1721,6 +1910,14 @@ public:
     {
     }
 
+    RTPS_DllAPI LifespanQosPolicy(
+            const fastrtps::Duration_t& lifespan)
+        : Parameter_t(PID_LIFESPAN, PARAMETER_TIME_LENGTH)
+        , QosPolicy(true)
+        , duration(lifespan)
+    {
+    }
+
     virtual RTPS_DllAPI ~LifespanQosPolicy()
     {
     }
@@ -1779,6 +1976,14 @@ public:
     {
     }
 
+    RTPS_DllAPI OwnershipStrengthQosPolicy(
+            uint32_t strength)
+        : Parameter_t(PID_OWNERSHIP_STRENGTH, 4)
+        , QosPolicy(false)
+        , value(strength)
+    {
+    }
+
     virtual RTPS_DllAPI ~OwnershipStrengthQosPolicy()
     {
     }
@@ -1834,10 +2039,19 @@ class TransportPriorityQosPolicy : public Parameter_t, public QosPolicy
 public:
 
     uint32_t value;
+
     RTPS_DllAPI TransportPriorityQosPolicy()
         : Parameter_t(PID_TRANSPORT_PRIORITY, 4)
         , QosPolicy(false)
         , value(0)
+    {
+    }
+
+    RTPS_DllAPI TransportPriorityQosPolicy(
+            uint32_t priority)
+        : Parameter_t(PID_TRANSPORT_PRIORITY, 4)
+        , QosPolicy(false)
+        , value(priority)
     {
     }
 
@@ -1934,9 +2148,18 @@ class DataRepresentationQosPolicy : public Parameter_t, public QosPolicy
 public:
 
     std::vector<DataRepresentationId_t> m_value;
+
     RTPS_DllAPI DataRepresentationQosPolicy()
         : Parameter_t(PID_DATA_REPRESENTATION, 0)
         , QosPolicy(true)
+    {
+    }
+
+    RTPS_DllAPI DataRepresentationQosPolicy(
+            const std::vector<DataRepresentationId_t>& value)
+        : Parameter_t(PID_DATA_REPRESENTATION, 0)
+        , QosPolicy(true)
+        , m_value(value)
     {
     }
 
@@ -2017,6 +2240,19 @@ public:
         m_ignore_member_names = false;
         m_prevent_type_widening = false;
         m_force_type_validation = false;
+    }
+
+    RTPS_DllAPI TypeConsistencyEnforcementQosPolicy(
+            TypeConsistencyKind kind)
+        : Parameter_t(PID_TYPE_CONSISTENCY_ENFORCEMENT, 8) // 2 + 5 + 1 alignment byte
+        , QosPolicy(true)
+        , m_kind(kind)
+        , m_ignore_sequence_bounds(true)
+        , m_ignore_string_bounds(true)
+        , m_ignore_member_names(false)
+        , m_prevent_type_widening(false)
+        , m_force_type_validation(false)
+    {
     }
 
     virtual RTPS_DllAPI ~TypeConsistencyEnforcementQosPolicy() override
