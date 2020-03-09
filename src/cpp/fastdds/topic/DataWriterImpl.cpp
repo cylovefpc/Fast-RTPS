@@ -52,7 +52,7 @@ DataWriterImpl::DataWriterImpl(
         TypeSupport type,
         const TopicAttributes& topic_att,
         const WriterAttributes& att,
-        const WriterQos& qos,
+        const DataWriterQos& qos,
         const MemoryManagementPolicy_t memory_policy,
         DataWriterListener* listen )
     : publisher_(p)
@@ -60,8 +60,8 @@ DataWriterImpl::DataWriterImpl(
     , type_(type)
     , topic_att_(topic_att)
     , w_att_(att)
-    , qos_(&qos == &DATAWRITER_QOS_DEFAULT ? publisher_->get_default_datawriter_qos() : qos)
-    , history_(topic_att_, type_->m_typeSize
+    , qos_(&qos == &DDS_DATAWRITER_QOS_DEFAULT ? publisher_->get_default_datawriter_qos() : qos)
+    , history_(topic_att_, type_.get()->m_typeSize
 #if HAVE_SECURITY
             // In future v2 changepool is in writer, and writer set this value to cachechagepool.
             + 20 /*SecureDataHeader*/ + 4 + ((2 * 16) /*EVP_MAX_IV_LENGTH max block size*/ - 1 ) /* SecureDataBodey*/
@@ -73,25 +73,25 @@ DataWriterImpl::DataWriterImpl(
 #pragma warning (disable : 4355 )
     , writer_listener_(this)
     , high_mark_for_frag_(0)
-    , deadline_duration_us_(qos_.m_deadline.period.to_ns() * 1e-3)
+    , deadline_duration_us_(qos_.deadline.period.to_ns() * 1e-3)
     , timer_owner_()
     , deadline_missed_status_()
-    , lifespan_duration_us_(qos_.m_lifespan.duration.to_ns() * 1e-3)
+    , lifespan_duration_us_(qos_.lifespan.duration.to_ns() * 1e-3)
     , user_datawriter_(nullptr)
 {
     deadline_timer_ = new TimedEvent(publisher_->get_participant()->get_resource_event(),
-            [&]() -> bool
-            {
-                return deadline_missed();
-            },
-            qos_.m_deadline.period.to_ns() * 1e-6);
+                    [&]() -> bool
+                {
+                    return deadline_missed();
+                },
+                    qos_.deadline.period.to_ns() * 1e-6);
 
     lifespan_timer_ = new TimedEvent(publisher_->get_participant()->get_resource_event(),
-            [&]() -> bool
-            {
-                return lifespan_expired();
-            },
-            qos_.m_lifespan.duration.to_ns() * 1e-6);
+                    [&]() -> bool
+                {
+                    return lifespan_expired();
+                },
+                    qos_.lifespan.duration.to_ns() * 1e-6);
 
     RTPSWriter* writer = RTPSDomain::createRTPSWriter(
         publisher_->rtps_participant(),
@@ -123,7 +123,7 @@ DataWriterImpl::~DataWriterImpl()
 
     if (writer_ != nullptr)
     {
-        logInfo(PUBLISHER, guid().entityId << " in topic: " << type_->getName());
+        logInfo(PUBLISHER, guid().entityId << " in topic: " << type_.get_type_name());
     }
 
     RTPSDomain::removeRTPSWriter(writer_);
@@ -212,7 +212,7 @@ bool DataWriterImpl::check_new_change_preconditions(
             || change_kind == NOT_ALIVE_DISPOSED
             || change_kind == NOT_ALIVE_DISPOSED_UNREGISTERED)
     {
-        if (!type_->m_isGetKeyDefined)
+        if (!type_.get()->m_isGetKeyDefined)
         {
             logError(PUBLISHER, "Topic is NO_KEY, operation not permitted");
             return false;
@@ -229,8 +229,8 @@ bool DataWriterImpl::perform_create_new_change(
         const InstanceHandle_t& handle)
 {
     // Block lowlevel writer
-    auto max_blocking_time = steady_clock::now() +
-            microseconds(::TimeConv::Time_t2MicroSecondsInt64(qos_.m_reliability.max_blocking_time));
+    auto max_blocking_time = std::chrono::steady_clock::now() +
+            std::chrono::microseconds(::TimeConv::Time_t2MicroSecondsInt64(qos_.reliability.max_blocking_time));
 
 #if HAVE_STRICT_REALTIME
     std::unique_lock<RecursiveTimedMutex> lock(writer_->getMutex(), std::defer_lock);
@@ -239,13 +239,13 @@ bool DataWriterImpl::perform_create_new_change(
     std::unique_lock<RecursiveTimedMutex> lock(writer_->getMutex());
 #endif
     {
-        CacheChange_t* ch = writer_->new_change(type_->getSerializedSizeProvider(data), change_kind, handle);
+        CacheChange_t* ch = writer_->new_change(type_.get()->getSerializedSizeProvider(data), change_kind, handle);
         if (ch != nullptr)
         {
             if (change_kind == ALIVE)
             {
                 //If these two checks are correct, we asume the cachechange is valid and thwn we can write to it.
-                if (!type_->serialize(data, &ch->serializedPayload))
+                if (!type_.serialize(data, &ch->serializedPayload))
                 {
                     logWarning(RTPS_WRITER, "RTPSWriter:Serialization returns false"; );
                     history_.release_Cache(ch);
@@ -285,7 +285,7 @@ bool DataWriterImpl::perform_create_new_change(
             if (ch->serializedPayload.length > final_high_mark_for_frag)
             {
                 // Check ASYNCHRONOUS_PUBLISH_MODE is being used, but it is an error case.
-                if (qos_.m_publishMode.kind != ASYNCHRONOUS_PUBLISH_MODE)
+                if (qos_.publish_mode.kind != ASYNCHRONOUS_PUBLISH_MODE)
                 {
                     logError(PUBLISHER, "Data cannot be sent. It's serialized size is " <<
                             ch->serializedPayload.length << "' which exceeds the maximum payload size of '" <<
@@ -306,7 +306,7 @@ bool DataWriterImpl::perform_create_new_change(
                 return false;
             }
 
-            if (qos_.m_deadline.period != c_TimeInfinite)
+            if (qos_.deadline.period != c_TimeInfinite)
             {
                 if (!history_.set_next_deadline(
                             ch->instanceHandle,
@@ -323,11 +323,11 @@ bool DataWriterImpl::perform_create_new_change(
                 }
             }
 
-            if (qos_.m_lifespan.duration != c_TimeInfinite)
+            if (qos_.lifespan.duration != c_TimeInfinite)
             {
-                lifespan_duration_us_ = duration<double, std::ratio<1, 1000000> >(
-                    qos_.m_lifespan.duration.to_ns() * 1e-3);
-                lifespan_timer_->update_interval_millisec(qos_.m_lifespan.duration.to_ns() * 1e-6);
+                lifespan_duration_us_ = std::chrono::duration<double, std::ratio<1, 1000000> >(
+                    qos_.lifespan.duration.to_ns() * 1e-3);
+                lifespan_timer_->update_interval_millisec(qos_.lifespan.duration.to_ns() * 1e-6);
             }
             else
             {
@@ -352,13 +352,13 @@ bool DataWriterImpl::create_new_change_with_params(
     }
 
     InstanceHandle_t handle;
-    if (type_->m_isGetKeyDefined)
+    if (type_.get()->m_isGetKeyDefined)
     {
         bool is_key_protected = false;
 #if HAVE_SECURITY
         is_key_protected = writer_->getAttributes().security_attributes().is_key_protected;
 #endif
-        type_->getKey(data, &handle, is_key_protected);
+        type_.get()->getKey(data, &handle, is_key_protected);
     }
 
     return perform_create_new_change(changeKind, data, wparams, handle);
@@ -407,7 +407,7 @@ bool DataWriterImpl::set_attributes(
     bool updated = true;
     bool missing = false;
 
-    if (qos_.m_reliability.kind == RELIABLE_RELIABILITY_QOS)
+    if (qos_.reliability.kind == RELIABLE_RELIABILITY_QOS)
     {
         if (att.endpoint.unicastLocatorList.size() != w_att_.endpoint.unicastLocatorList.size() ||
                 att.endpoint.multicastLocatorList.size() != w_att_.endpoint.multicastLocatorList.size())
@@ -460,7 +460,7 @@ bool DataWriterImpl::set_attributes(
 
     if (updated)
     {
-        if (qos_.m_reliability.kind == RELIABLE_RELIABILITY_QOS)
+        if (qos_.reliability.kind == RELIABLE_RELIABILITY_QOS)
         {
             //UPDATE TIMES:
             StatefulWriter* sfw = static_cast<StatefulWriter*>(writer_);
@@ -479,7 +479,7 @@ const WriterAttributes& DataWriterImpl::get_attributes() const
 }
 
 ReturnCode_t DataWriterImpl::set_qos(
-        const WriterQos& qos)
+        const DataWriterQos& qos)
 {
     //QOS:
     //CHECK IF THE QOS CAN BE SET
@@ -494,15 +494,16 @@ ReturnCode_t DataWriterImpl::set_qos(
 
     qos_.setQos(qos, false);
     //Notify the participant that a Writer has changed its QOS
-    publisher_->rtps_participant()->updateWriter(writer_, topic_att_, qos_);
+    fastrtps::WriterQos wqos_ = qos_.changeToWriterQos();
+    publisher_->rtps_participant()->updateWriter(writer_, topic_att_, wqos_);
     //publisher_->update_writer(this, topic_att_, qos_);
 
     // Deadline
-    if (qos_.m_deadline.period != c_TimeInfinite)
+    if (qos_.deadline.period != c_TimeInfinite)
     {
         deadline_duration_us_ =
-                duration<double, std::ratio<1, 1000000> >(qos_.m_deadline.period.to_ns() * 1e-3);
-        deadline_timer_->update_interval_millisec(qos_.m_deadline.period.to_ns() * 1e-6);
+                duration<double, std::ratio<1, 1000000> >(qos_.deadline.period.to_ns() * 1e-3);
+        deadline_timer_->update_interval_millisec(qos_.deadline.period.to_ns() * 1e-6);
     }
     else
     {
@@ -510,11 +511,11 @@ ReturnCode_t DataWriterImpl::set_qos(
     }
 
     // Lifespan
-    if (qos_.m_lifespan.duration != c_TimeInfinite)
+    if (qos_.lifespan.duration != c_TimeInfinite)
     {
         lifespan_duration_us_ =
-                duration<double, std::ratio<1, 1000000> >(qos_.m_lifespan.duration.to_ns() * 1e-3);
-        lifespan_timer_->update_interval_millisec(qos_.m_lifespan.duration.to_ns() * 1e-6);
+                duration<double, std::ratio<1, 1000000> >(qos_.lifespan.duration.to_ns() * 1e-3);
+        lifespan_timer_->update_interval_millisec(qos_.lifespan.duration.to_ns() * 1e-6);
     }
     else
     {
@@ -524,7 +525,7 @@ ReturnCode_t DataWriterImpl::set_qos(
     return ReturnCode_t::RETCODE_OK;
 }
 
-const WriterQos& DataWriterImpl::get_qos() const
+const DataWriterQos& DataWriterImpl::get_qos() const
 {
     return qos_;
 }
@@ -582,7 +583,7 @@ void DataWriterImpl::InnerDataWriterListener::onWriterChangeReceivedByAll(
         RTPSWriter* /*writer*/,
         CacheChange_t* ch)
 {
-    if (data_writer_->qos_.m_durability.kind == VOLATILE_DURABILITY_QOS)
+    if (data_writer_->qos_.durability.kind == VOLATILE_DURABILITY_QOS)
     {
         data_writer_->history_.remove_change_g(ch);
     }
@@ -612,7 +613,7 @@ ReturnCode_t DataWriterImpl::wait_for_acknowledgments(
 
 bool DataWriterImpl::deadline_timer_reschedule()
 {
-    assert(qos_.m_deadline.period != c_TimeInfinite);
+    assert(qos_.deadline.period != c_TimeInfinite);
 
     std::unique_lock<RecursiveTimedMutex> lock(writer_->getMutex());
 
@@ -630,7 +631,7 @@ bool DataWriterImpl::deadline_timer_reschedule()
 
 bool DataWriterImpl::deadline_missed()
 {
-    assert(qos_.m_deadline.period != c_TimeInfinite);
+    assert(qos_.deadline.period != c_TimeInfinite);
 
     std::unique_lock<RecursiveTimedMutex> lock(writer_->getMutex());
 
@@ -726,7 +727,7 @@ ReturnCode_t DataWriterImpl::assert_liveliness()
         return ReturnCode_t::RETCODE_ERROR;
     }
 
-    if (qos_.m_liveliness.kind == MANUAL_BY_TOPIC_LIVELINESS_QOS)
+    if (qos_.liveliness.kind == MANUAL_BY_TOPIC_LIVELINESS_QOS)
     {
         // As described in the RTPS specification, if liveliness kind is manual a heartbeat must be sent
         // This only applies to stateful writers, as stateless writers do not send heartbeats
