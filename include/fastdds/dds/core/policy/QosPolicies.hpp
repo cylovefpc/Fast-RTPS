@@ -82,12 +82,7 @@ public:
     }
 
     QosPolicy(
-            const QosPolicy& other)
-    {
-        send_always_ = other.send_always();
-        hasChanged = other.hasChanged;
-        policy_id_ = other.policy_id_;
-    }
+            const QosPolicy& b) = default;
 
     virtual ~QosPolicy()
     {
@@ -100,6 +95,8 @@ public:
                (this->send_always_ == b.send_always_);
     }
 
+    QosPolicy& operator =(
+            const QosPolicy& b) = default;
     /**
      * Whether it should always be sent.
      * @return True if it should always be sent.
