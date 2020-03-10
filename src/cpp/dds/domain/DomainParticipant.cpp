@@ -91,6 +91,12 @@ bool DomainParticipant::unregister_type(
     return impl_->unregister_type(typeName);
 }
 
+
+void DomainParticipant::enable()
+{
+    impl_->enable();
+}
+
 /* TODO
 Subscriber* DomainParticipant::get_builtin_subscriber()
 {
